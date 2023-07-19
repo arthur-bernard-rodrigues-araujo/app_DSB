@@ -4,7 +4,6 @@ from dash.dependencies import Input, Output
 import locale
 
 app = dash.Dash(__name__)
-server = app.server
 
 # List of London neighborhoods in alphabetical order
 london_neighborhoods = [
@@ -72,35 +71,34 @@ locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
 app.layout = html.Div(
     style={
         'textAlign': 'center',
-        'background': 'radial-gradient(#696969, #f5f7fa)',  # Radial gradient from center to edges with darker tone #696969
+        'background': '#ffffff',  # Background branco
         'height': '100vh',
         'display': 'flex',
         'flexDirection': 'column',
         'alignItems': 'center',
-        'justifyContent': 'center'
+        'justifyContent': 'center',
+        'fontFamily': 'Arial',  # Fonte Arial
     },
     children=[
-        html.H1("London Housing Prices Calculator", style={'marginBottom': '30px'}),
-        html.Label("Select a neighborhood:"),
+        html.H1("London Housing Prices Calculator", style={'marginBottom': '20px', 'fontSize': '36px', 'fontFamily': 'Arial'}),
+        html.Label("Select a neighborhood:", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
         dcc.Dropdown(
             id='neighborhood-dropdown',
             options=[{'label': neighborhood, 'value': neighborhood} for neighborhood in london_neighborhoods],
             value=london_neighborhoods[0],
-            style={'width': '300px', 'marginBottom': '10px'}
+            style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial'},
         ),
-        html.Label("Property Area (m²):"),
-        dcc.Input(id='area-input', type='number', placeholder='Property Area (m²)', value=50,
-                  style={'marginBottom': '10px', 'width': '300px'}),
-        html.Label("Distance to Tube (m):"),
-        dcc.Input(id='distance-input', type='number', placeholder='Distance to Tube (m)', value=100,
-                  style={'marginBottom': '10px', 'width': '300px'}),
-        html.Label("Number of Bathrooms:"),
-        dcc.Input(id='bathrooms-input', type='number', placeholder='Number of Bathrooms', value=1,
-                  style={'marginBottom': '30px', 'width': '300px'}),
-        html.Button('Calculate Price', id='button', n_clicks=0, style={'textAlign': 'center', 'width': '300px'}),
-        html.Div(id='output', style={'marginTop': '30px', 'fontSize': '20px'})
+        html.Label("Property Area (m²):", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
+        dcc.Input(id='area-input', type='number', placeholder='Property Area (m²)', value=50, style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
+        html.Label("Distance to Tube (m):", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
+        dcc.Input(id='distance-input', type='number', placeholder='Distance to Tube (m)', value=100, style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
+        html.Label("Number of Bathrooms:", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
+        dcc.Input(id='bathrooms-input', type='number', placeholder='Number of Bathrooms', value=1, style={'width': '300px', 'height': '50px', 'marginBottom': '30px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
+        html.Button('Calculate Price', id='button', n_clicks=0, style={'textAlign': 'center', 'width': '300px', 'height': '50px', 'fontSize': '18px', 'fontFamily': 'Arial'}),
+        html.Div(id='output', style={'marginTop': '30px', 'fontSize': '20px', 'fontFamily': 'Arial'})
     ]
 )
+
 
 # Média de preço por metro quadrado em Londres (em pounds)
 average_price_per_sqm = 10
