@@ -65,7 +65,7 @@ london_neighborhoods = [
 ]
 
 # Set the locale to the UK for formatting numbers as monetary values (pounds)
-locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
+#locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
 
 # App layout with custom style
 app.layout = html.Div(
@@ -129,9 +129,9 @@ def update_output(n_clicks, neighborhood, area, distance, bathrooms):
             estimated_price += bathrooms * 10000  # Assuming £10,000 per bathroom
 
             # Format the estimated price as a monetary value (pounds)
-            formatted_price = locale.currency(estimated_price, grouping=True)
+            #formatted_price = locale.currency(estimated_price, grouping=True)
 
-            return f"The estimated price for {neighborhood} is: {formatted_price}"
+            return f"The estimated price for {neighborhood} is: {estimated_price}"
 
 if __name__ == '__main__':
     app.run_server(debug=True)
