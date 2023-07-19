@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output
 import locale
 
 app = dash.Dash(__name__)
+server = app.server
 
 # List of London neighborhoods in alphabetical order
 london_neighborhoods = [
