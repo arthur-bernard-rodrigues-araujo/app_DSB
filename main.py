@@ -50,7 +50,10 @@ london_neighborhoods = [
 app.layout = html.Div(
     style={
         'textAlign': 'center',
-        'background': '#ffffff',
+        'backgroundImage': 'url(https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/background.PNG)',
+        'backgroundRepeat': 'no-repeat',
+        'backgroundSize': 'cover',
+        'backgroundPosition': 'center',
         'height': '100vh',
         'display': 'flex',
         'flexDirection': 'column',
