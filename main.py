@@ -1,7 +1,24 @@
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
-#import locale
+import pandas as pd
+import requests
+from io import BytesIO
+
+url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
+
+# Função para carregar a base de dados a partir do URL
+def load_data(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Verificar se houve algum erro na requisição
+
+        content = response.content
+        df = pd.read_excel(BytesIO(content), engine='openpyxl')
+        return df
+    except Exception as e:
+        print(f"Ocorreu um erro ao carregar a base de dados: {e}")
+        return None
 
 app = dash.Dash(__name__)
 server = app.server
@@ -43,9 +60,6 @@ london_neighborhoods = [
     'Westminster'
 ]
 
-# Set the locale to the UK for formatting numbers as monetary values (pounds)
-#locale.setlocale(locale.LC_ALL, 'en_GB.UTF-8')
-
 # App layout with custom style
 app.layout = html.Div(
     style={
@@ -78,10 +92,6 @@ app.layout = html.Div(
     ]
 )
 
-
-# Média de preço por metro quadrado em Londres (em pounds)
-average_price_per_sqm = 10
-
 # Callback function to update the output div
 @app.callback(
     Output('output', 'children'),
@@ -99,18 +109,23 @@ def update_output(n_clicks, neighborhood, area, distance, bathrooms):
             # Convert area and distance to meters if needed (assuming they are initially provided in meters)
             area_m2 = int(area) if int(area) > 0 else 0
             distance_m = int(distance) if int(distance) > 0 else 0
+            bathrooms = int(bathrooms) if int(bathrooms) > 0 else 0
 
-            # Calculate the estimated price based on the average price per square meter
-            estimated_price = area_m2 * average_price_per_sqm
+            data = load_data(url)
+            # Filter the data based on the selected neighborhood, area, distance, and bathrooms
+            filtered_data = data[(data['neighborhood'] == neighborhood) & (data['area'] == area_m2) & (
+                        data['distance'] == distance_m) & (data['bathrooms'] == bathrooms)]
 
-            # Add additional cost based on the distance to the tube and number of bathrooms
-            estimated_price += distance_m * 5  # Assuming £5 per meter to the tube
-            estimated_price += bathrooms * 10000  # Assuming £10,000 per bathroom
+            if filtered_data.empty:
+                return "No data available for the selected criteria."
+            else:
+                # Get the estimated price for the selected combination
+                estimated_price = filtered_data['estimated_price'].values[0]
 
-            # Format the estimated price as a monetary value (pounds)
-            formatted_price = f'£{estimated_price:,.2f}'  # Adiciona o símbolo de libra esterlina e vírgula de milhar
+                # Format the estimated price as a monetary value (pounds)
+                formatted_price = f'£{estimated_price:,.2f}'  # Adiciona o símbolo de libra esterlina e vírgula de milhar
 
-            return f"The estimated price for {neighborhood} is: {formatted_price}"
+                return f"The estimated price for {neighborhood} is: {formatted_price}"
 
 if __name__ == '__main__':
     app.run_server(debug=True)
