@@ -108,9 +108,9 @@ def update_output(n_clicks, neighborhood, area, distance, bathrooms):
             estimated_price += bathrooms * 10000  # Assuming £10,000 per bathroom
 
             # Format the estimated price as a monetary value (pounds)
-            #formatted_price = locale.currency(estimated_price, grouping=True)
+            formatted_price = f'£{estimated_price:,.2f}'  # Adiciona o símbolo de libra esterlina e vírgula de milhar
 
-            return f"The estimated price for {neighborhood} is: {estimated_price}"
+            return f"The estimated price for {neighborhood} is: {formatted_price}"
 
 if __name__ == '__main__':
     app.run_server(debug=True)
