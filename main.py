@@ -2,23 +2,8 @@ import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import pandas as pd
-import requests
-from io import BytesIO
 
 url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
-
-# Função para carregar a base de dados a partir do URL
-def load_data(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Verificar se houve algum erro na requisição
-
-        content = response.content
-        df = pd.read_excel(BytesIO(content), engine='openpyxl')
-        return df
-    except Exception as e:
-        print(f"Ocorreu um erro ao carregar a base de dados: {e}")
-        return None
 
 app = dash.Dash(__name__)
 server = app.server
@@ -82,9 +67,9 @@ app.layout = html.Div(
             style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial'},
         ),
         html.Label("Property Area (m²):", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
-        dcc.Input(id='area-input', type='number', placeholder='Property Area (m²)', value=50, style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
+        dcc.Input(id='area-input', type='number', placeholder='Property Area (m²)', value=1455, style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
         html.Label("Distance to Tube (m):", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
-        dcc.Input(id='distance-input', type='number', placeholder='Distance to Tube (m)', value=100, style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
+        dcc.Input(id='distance-input', type='number', placeholder='Distance to Tube (m)', value=949, style={'width': '300px', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
         html.Label("Number of Bathrooms:", style={'fontSize': '18px', 'fontFamily': 'Arial'}),
         dcc.Input(id='bathrooms-input', type='number', placeholder='Number of Bathrooms', value=1, style={'width': '300px', 'height': '50px', 'marginBottom': '30px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'}),
         html.Button('Calculate Price', id='button', n_clicks=0, style={'textAlign': 'center', 'width': '300px', 'height': '50px', 'fontSize': '18px', 'fontFamily': 'Arial'}),
@@ -111,7 +96,7 @@ def update_output(n_clicks, neighborhood, area, distance, bathrooms):
             distance_m = int(distance) if int(distance) > 0 else 0
             bathrooms = int(bathrooms) if int(bathrooms) > 0 else 0
 
-            data = load_data(url)
+            data = pd.read_excel(url, engine='openpyxl')
             # Filter the data based on the selected neighborhood, area, distance, and bathrooms
             filtered_data = data[(data['neighborhood'] == neighborhood) & (data['area'] == area_m2) & (
                         data['distance'] == distance_m) & (data['bathrooms'] == bathrooms)]
