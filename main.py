@@ -4,29 +4,29 @@ from dash.dependencies import Input, Output
 import pandas as pd
 
 url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
+#url = 'LondonHousingData.xlsx'
+data = pd.read_excel(url, engine='openpyxl')
 
 app = dash.Dash(__name__)
-server = app.server
+#server = app.server
 
 # Function to get unique values for neighborhood, area and distance to the station from the Excel file
-def get_unique_values(column_name):
-    data = pd.read_excel(url, engine='openpyxl')
+def get_unique_values(column_name, data):
     return data[column_name].unique()
 
-unique_areas = get_unique_values('area')
-unique_distances = get_unique_values('distance')
-london_neighborhoods = get_unique_values('neighborhood')
+unique_areas = get_unique_values('area', data)
+unique_distances = get_unique_values('distance', data)
+london_neighborhoods = get_unique_values('neighborhood', data)
 
 # Function to get the min and max values for area and distance to the station from the Excel file
-def get_min_max_values():
-    data = pd.read_excel(url, engine='openpyxl')
+def get_min_max_values(data):
     min_area = data['area'].min()
     max_area = data['area'].max()
     min_distance = data['distance'].min()
     max_distance = data['distance'].max()
     return min_area, max_area, min_distance, max_distance
 
-min_area, max_area, min_distance, max_distance = get_min_max_values()
+min_area, max_area, min_distance, max_distance = get_min_max_values(data)
 
 # App layout with custom style
 app.layout = html.Div(
@@ -69,11 +69,11 @@ app.layout = html.Div(
                         ),
                         dcc.Slider(
                             id='area-input',
-                            min=min_area,
+                            min=0,
                             max=max_area,
-                            step=100,
+                            step=300,
                             value=min_area,
-                            marks={i: str(i) for i in range(min_area, max_area, 1000)}
+                            marks={i: str(i) for i in range(0, max_area, 1000)}
                         ),
                         html.Label(
                             id='distance-label',  # Add an ID to the label to update its text
@@ -81,11 +81,11 @@ app.layout = html.Div(
                         ),
                         dcc.Slider(
                             id='distance-input',
-                            min=min_distance,
+                            min=0,
                             max=max_distance,
-                            step=100,
+                            step=50,
                             value=min_distance,
-                            marks={i: str(i) for i in range(min_distance, max_distance + 1, 100)}
+                            marks={i: str(i) for i in range(0, max_distance, 100)}
                         ),
                         html.Label(
                             "Number of Bathrooms:",
@@ -129,7 +129,7 @@ app.layout = html.Div(
     [Input('area-input', 'value')]
 )
 def update_area_label(value):
-    return f"Property Area (m²): {value}"
+    return f"Property Area (ft²): {value}"
 
 # Callback function to update the label text for the distance slider
 @app.callback(
@@ -161,7 +161,6 @@ def update_output(n_clicks, neighborhood, area, distance, bathrooms):
         distance_m = int(distance) if int(distance) > 0 else 0
         bathrooms = int(bathrooms) if int(bathrooms) > 0 else 0
 
-        data = pd.read_excel(url, engine='openpyxl')
         # Filter the data based on the selected neighborhood, area, distance, and bathrooms
         filtered_data = data[(data['neighborhood'] == neighborhood) & (data['area'] == area_m2) & (
                     data['distance'] == distance_m) & (data['bathrooms'] == bathrooms)]
