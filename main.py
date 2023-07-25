@@ -8,7 +8,7 @@ url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/Londo
 data = pd.read_excel(url, engine='openpyxl')
 
 app = dash.Dash(__name__)
-#server = app.server
+server = app.server
 
 # Function to get unique values for neighborhood, area and distance to the station from the Excel file
 def get_unique_values(column_name, data):
