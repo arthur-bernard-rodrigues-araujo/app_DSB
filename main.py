@@ -1,4 +1,3 @@
-
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -9,42 +8,25 @@ url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/Londo
 app = dash.Dash(__name__)
 server = app.server
 
-# List of London neighborhoods in alphabetical order
-london_neighborhoods = [
-    'Barking & Dagenham',
-    'Barnet',
-    'Bexley',
-    'Brent',
-    'Bromley',
-    'Camden',
-    'City of London',
-    'Croydon',
-    'Ealing',
-    'Enfield',
-    'Greenwich',
-    'Hackney',
-    'Hammersmith & Fulham',
-    'Haringey',
-    'Harrow',
-    'Havering',
-    'Hillingdon',
-    'Hounslow',
-    'Islington',
-    'Kensington & Chelsea',
-    'Kingston upon Thames',
-    'Lambeth',
-    'Lewisham',
-    'Merton',
-    'Newham',
-    'Redbridge',
-    'Richmond upon Thames',
-    'Southwark',
-    'Sutton',
-    'Tower Hamlets',
-    'Waltham Forest',
-    'Wandsworth',
-    'Westminster'
-]
+# Function to get unique values for neighborhood, area and distance to the station from the Excel file
+def get_unique_values(column_name):
+    data = pd.read_excel(url, engine='openpyxl')
+    return data[column_name].unique()
+
+unique_areas = get_unique_values('area')
+unique_distances = get_unique_values('distance')
+london_neighborhoods = get_unique_values('neighborhood')
+
+# Function to get the min and max values for area and distance to the station from the Excel file
+def get_min_max_values():
+    data = pd.read_excel(url, engine='openpyxl')
+    min_area = data['area'].min()
+    max_area = data['area'].max()
+    min_distance = data['distance'].min()
+    max_distance = data['distance'].max()
+    return min_area, max_area, min_distance, max_distance
+
+min_area, max_area, min_distance, max_distance = get_min_max_values()
 
 # App layout with custom style
 app.layout = html.Div(
@@ -82,26 +64,28 @@ app.layout = html.Div(
                             style={'width': '100%', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial'},
                         ),
                         html.Label(
-                            "Property Area (m²):",
+                            id='area-label',  # Add an ID to the label to update its text
                             style={'fontSize': '18px', 'fontFamily': 'Arial', 'fontWeight': 'bold'},
                         ),
-                        dcc.Input(
+                        dcc.Slider(
                             id='area-input',
-                            type='number',
-                            placeholder='Property Area (m²)',
-                            value=1455,
-                            style={'width': '100%', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'},
+                            min=min_area,
+                            max=max_area,
+                            step=100,
+                            value=min_area,
+                            marks={i: str(i) for i in range(min_area, max_area, 1000)}
                         ),
                         html.Label(
-                            "Distance to Tube (m):",
+                            id='distance-label',  # Add an ID to the label to update its text
                             style={'fontSize': '18px', 'fontFamily': 'Arial', 'fontWeight': 'bold'}
                         ),
-                        dcc.Input(
+                        dcc.Slider(
                             id='distance-input',
-                            type='number',
-                            placeholder='Distance to Tube (m)',
-                            value=949,
-                            style={'width': '100%', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'},
+                            min=min_distance,
+                            max=max_distance,
+                            step=100,
+                            value=min_distance,
+                            marks={i: str(i) for i in range(min_distance, max_distance + 1, 100)}
                         ),
                         html.Label(
                             "Number of Bathrooms:",
@@ -139,6 +123,21 @@ app.layout = html.Div(
         ),
     ]
 )
+# Callback function to update the label text for the area slider
+@app.callback(
+    Output('area-label', 'children'),
+    [Input('area-input', 'value')]
+)
+def update_area_label(value):
+    return f"Property Area (m²): {value}"
+
+# Callback function to update the label text for the distance slider
+@app.callback(
+    Output('distance-label', 'children'),
+    [Input('distance-input', 'value')]
+)
+def update_distance_label(value):
+    return f"Distance to Station (m): {value}"
 
 # Callback function to update the output div
 @app.callback(
