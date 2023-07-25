@@ -1,197 +1,157 @@
 import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash import dcc, html, Input, Output, State
 import pandas as pd
 
-url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
-#url = 'LondonHousingData.xlsx'
-data = pd.read_excel(url, engine='openpyxl')
+# Função para calcular o valor do imóvel (exemplo simples)
+def calculate_property_value(neighborhood, distance_m, num_rooms, zone, property_type, area, data):
+    filtered_data = data[
+        (data['District'] == neighborhood) &
+        (data['Distance_to_station'] == distance_m) &
+        (data['No_of_Bedrooms'] == num_rooms) &
+        (data['London_zone'] == zone) &
+        (data['House_Type'] == property_type)
+    ]
 
+    if filtered_data.empty:
+        return 0  # Retorna 0 se não encontrar nenhum elemento no filtro
+    else:
+        base_value = filtered_data['Predicted_value'].iloc[0]
+        estimated_value = base_value * area
+        return estimated_value
+
+
+# Importar o banco de dados
+url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
+df = pd.read_excel(url, sheet_name='Planilha3', usecols='A:H')
+
+# Obter os valores únicos das colunas do BD em ordem alfabética ou crescente
+district_values = sorted(df['District'].unique())
+house_type_values = sorted(df['House_Type'].unique())
+zone_values = sorted(df['London_zone'].unique())
+distance_values = sorted(df['Distance_to_station'].unique())
+area_values = sorted(df['Area_in_sq_ft'].unique())
+
+# Inicialização da aplicação
 app = dash.Dash(__name__)
 server = app.server
 
-# Function to get unique values for neighborhood, area and distance to the station from the Excel file
-def get_unique_values(column_name, data):
-    return data[column_name].unique()
-
-unique_areas = get_unique_values('area', data)
-unique_distances = get_unique_values('distance', data)
-london_neighborhoods = get_unique_values('neighborhood', data)
-
-# Function to get the min and max values for area and distance to the station from the Excel file
-def get_min_max_values(data):
-    min_area = data['area'].min()
-    max_area = data['area'].max()
-    min_distance = data['distance'].min()
-    max_distance = data['distance'].max()
-    return min_area, max_area, min_distance, max_distance
-
-min_area, max_area, min_distance, max_distance = get_min_max_values(data)
-
-# App layout with custom style
+# Layout da aplicação
 app.layout = html.Div(
-    style={
-        'textAlign': 'center',
-        'backgroundImage': 'url(https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/background.PNG)',
-        'backgroundRepeat': 'no-repeat',
-        'backgroundSize': 'cover',
-        'backgroundPosition': 'center',
-        'height': '100vh',
-        'display': 'flex',
-        'flexDirection': 'column',
-        'alignItems': 'center',
-        'fontFamily': 'Arial',
-    },
+    style={"font-family": "Arial", "text-align": "center", "padding-top": "70px"},  # Adicionando o espaçamento superior de 36px
     children=[
-        html.H1(
-            "London Housing Prices Calculator",
-            style={'marginTop': '20px', 'marginBottom': '20px', 'fontSize': '36px', 'fontFamily': 'Arial'}
-        ),
+        # Grid para esticar a imagem de fundo
         html.Div(
-            style={'display': 'flex', 'flexDirection': 'row', 'width': '80%'},
+            style={
+                "position": "fixed",
+                "top": 0,
+                "left": 0,
+                "width": "100%",
+                "height": "100%",
+                "z-index": "-1",
+                "background-image": "url(https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/background%20plus%20com%20logo.png)",
+                "background-size": "cover",
+            }
+        ),
+        # Grid com 7 colunas
+        html.Div(
+            style={"display": "grid", "grid-template-columns": "repeat(7, 1fr)", "grid-gap": "10px", "padding": "10px"},
             children=[
+                # Labels e Componentes
                 html.Div(
-                    style={'flex': '1', 'padding': '20px'},
                     children=[
-                        html.Label(
-                            "Select a neighborhood:",
-                            style={'fontSize': '18px', 'fontFamily': 'Arial', 'fontWeight': 'bold'}
-                        ),
+                        html.Label("Neighborhood:", style={"font-weight": "bold", "font-size": "14px"}),
                         dcc.Dropdown(
-                            id='neighborhood-dropdown',
-                            options=[{'label': neighborhood, 'value': neighborhood} for neighborhood in london_neighborhoods],
-                            value=london_neighborhoods[0],
-                            style={'width': '100%', 'height': '50px', 'marginBottom': '10px', 'fontSize': '16px', 'fontFamily': 'Arial'},
+                            id="neighborhood-dropdown",
+                            options=[{"label": district, "value": district} for district in district_values],
+                            value=district_values[-6] if district_values else None,
                         ),
-                        html.Label(
-                            id='area-label',  # Add an ID to the label to update its text
-                            style={'fontSize': '18px', 'fontFamily': 'Arial', 'fontWeight': 'bold'},
-                        ),
-                        dcc.Slider(
-                            id='area-input',
-                            min=0,
-                            max=max_area,
-                            step=300,
-                            value=min_area,
-                            marks={i: str(i) for i in range(0, max_area, 1000)}
-                        ),
-                        html.Label(
-                            id='distance-label',  # Add an ID to the label to update its text
-                            style={'fontSize': '18px', 'fontFamily': 'Arial', 'fontWeight': 'bold'}
-                        ),
-                        dcc.Slider(
-                            id='distance-input',
-                            min=0,
-                            max=max_distance,
-                            step=50,
-                            value=min_distance,
-                            marks={i: str(i) for i in range(0, max_distance, 100)}
-                        ),
-                        html.Label(
-                            "Number of Bathrooms:",
-                            style={'fontSize': '18px', 'fontFamily': 'Arial', 'fontWeight': 'bold'}
-                        ),
-                        dcc.Input(
-                            id='bathrooms-input',
-                            type='number',
-                            placeholder='Number of Bathrooms',
-                            value=1,
-                            style={'width': '100%', 'height': '50px', 'marginBottom': '30px', 'fontSize': '16px', 'fontFamily': 'Arial', 'textAlign': 'center'},
-                        ),
-                        html.Button(
-                            'Calculate Price',
-                            id='button',
-                            n_clicks=0,
-                            style={'textAlign': 'center', 'width': '100%', 'height': '50px', 'fontSize': '18px', 'fontFamily': 'Arial'}
-                        ),
-                    ]
+                    ],
                 ),
                 html.Div(
-                    style={'flex': '1', 'padding': '20px', 'fontSize': '20px', 'fontFamily': 'Arial', 'textAlign': 'center'},
                     children=[
-                        html.Div(
-                            style={'marginTop': '20px', 'fontWeight': 'bold'},
-                            id='output-value-container'
+                        html.Label("Property Area (ft²): ", style={"font-weight": "bold", "font-size": "14px"}),
+                        dcc.Dropdown(
+                            id="property-area-dropdown",
+                            options=[{"label": str(area), "value": area} for area in area_values],
+                            value=1261,#area_values[5] if area_values else None,
                         ),
-                        html.Div(
-                            style={'marginTop': '30px', 'fontSize': '18px', 'fontFamily': 'Arial'},
-                            id='price-container'
-                        )
-                    ]
-                )
-            ]
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.Label("Distance to station (m): ", style={"font-weight": "bold", "font-size": "14px"}),
+                        dcc.Dropdown(
+                            id="distance-dropdown",
+                            options=[{"label": str(distance), "value": distance} for distance in distance_values],
+                            value=316,#distance_values[5] if distance_values else None,
+                        ),
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.Label("# Rooms: ", style={"font-weight": "bold", "font-size": "14px"}),
+                        dcc.Slider(
+                            id="rooms-slider",
+                            min=1,
+                            max=6,
+                            value=3,
+                            marks={i: str(i) for i in range(1, 7)},
+                            included=False,
+                            updatemode="drag",
+                            tooltip={"placement": "bottom"},
+                            step=1,  # Define o passo do slider para valores inteiros
+                        ),
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.Label("Zone:", style={"font-weight": "bold", "font-size": "14px"}),
+                        dcc.Dropdown(
+                            id="zone-dropdown",
+                            options=[{"label": zone, "value": zone} for zone in zone_values],
+                            value=zone_values[2] if zone_values else None,
+                        ),
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.Label("Property Type:", style={"font-weight": "bold", "font-size": "14px"}),
+                        dcc.Dropdown(
+                            id="property-type-dropdown",
+                            options=[{"label": house_type, "value": house_type} for house_type in house_type_values],
+                            value=house_type_values[2] if house_type_values else None,
+                        ),
+                    ],
+                ),
+                html.Div(
+                    children=[
+                        html.Button("Calculate", id="calculate-button", style={"width": "100%", "padding": "10px"}),
+                        html.Div(id="property-value-output", style={"font-size": "16px"}),
+                    ],
+                ),
+            ],
         ),
     ]
 )
-# Callback function to update the label text for the area slider
+
+# Callback para calcular e exibir o valor do imóvel
 @app.callback(
-    Output('area-label', 'children'),
-    [Input('area-input', 'value')]
+    Output("property-value-output", "children"),
+    Input("calculate-button", "n_clicks"),
+    State("neighborhood-dropdown", "value"),
+    State("distance-dropdown", "value"),
+    State("rooms-slider", "value"),
+    State("zone-dropdown", "value"),
+    State("property-type-dropdown", "value"),
+    State("property-area-dropdown", "value"),
 )
-def update_area_label(value):
-    return f"Property Area (ft²): {value}"
 
-# Callback function to update the label text for the distance slider
-@app.callback(
-    Output('distance-label', 'children'),
-    [Input('distance-input', 'value')]
-)
-def update_distance_label(value):
-    return f"Distance to Station (m): {value}"
+def calculate_and_display_property_value(n_clicks, neighborhood, distance_m, num_rooms, zone, property_type, area):
+    if n_clicks is not None:
+        property_value = calculate_property_value(neighborhood, distance_m, num_rooms, zone, property_type, area, df)
+        return "Today: £{:,}".format(property_value)
+    return ""
 
-# Callback function to update the output div
-@app.callback(
-    [Output('output-value-container', 'children'),
-     Output('price-container', 'children')],
-    [Input('button', 'n_clicks')],
-    [dash.dependencies.State('neighborhood-dropdown', 'value'),
-     dash.dependencies.State('area-input', 'value'),
-     dash.dependencies.State('distance-input', 'value'),
-     dash.dependencies.State('bathrooms-input', 'value')]
-)
-def update_output(n_clicks, neighborhood, area, distance, bathrooms):
-    if neighborhood is not None:
-        neighborhood_text = neighborhood
-    else:
-        neighborhood_text = ""
-
-    if n_clicks > 0 and area is not None and distance is not None and bathrooms is not None:
-        # Convert area and distance to meters if needed (assuming they are initially provided in meters)
-        area_m2 = int(area) if int(area) > 0 else 0
-        distance_m = int(distance) if int(distance) > 0 else 0
-        bathrooms = int(bathrooms) if int(bathrooms) > 0 else 0
-
-        # Filter the data based on the selected neighborhood, area, distance, and bathrooms
-        filtered_data = data[(data['neighborhood'] == neighborhood) & (data['area'] == area_m2) & (
-                    data['distance'] == distance_m) & (data['bathrooms'] == bathrooms)]
-
-        if filtered_data.empty:
-            return "No data available for the selected criteria.", ""
-
-        # Get the estimated price for the selected combination
-        estimated_price = filtered_data['estimated_price'].values[0]
-
-        # Calculate future price (estimated price * 2)
-        future_price = estimated_price * 2
-
-        # Format the estimated price and future price as monetary values (pounds)
-        formatted_price = f'£{estimated_price:,.2f}'
-        formatted_future_price = f'£{future_price:,.2f}'
-
-        # Set the color based on the value
-        color = 'red' if estimated_price > 1000000 else 'green'
-
-        # Prepare the output text
-        output_text = f"The estimated price for {neighborhood_text} is: {formatted_price}"
-
-        # Combine both prices into a single text with different colors for estimated and future prices
-        price_text = html.Div([
-            "The estimated property price for the next 5 years is: ", html.Span(formatted_future_price, style={'color': color})
-        ])
-
-        return output_text, price_text
-    else:
-        return "Please fill in all fields.", ""
-
-if __name__ == '__main__':
+# Execução do servidor local
+if __name__ == "__main__":
     app.run_server(debug=True)
