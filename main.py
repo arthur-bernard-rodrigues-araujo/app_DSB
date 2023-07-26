@@ -17,12 +17,13 @@ def calculate_property_value(neighborhood, distance_m, num_rooms, zone, property
     else:
         base_value = filtered_data['Predicted_value'].iloc[0]
         estimated_value = base_value * area
-        return estimated_value
+        expected_gain = filtered_data['Percent_5_years'].iloc[0]*100
+        return estimated_value, expected_gain
 
 
 # Importar o banco de dados
 url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
-df = pd.read_excel(url, sheet_name='Planilha3', usecols='A:H')
+df = pd.read_excel(url, sheet_name='Planilha3')
 
 # Obter os valores únicos das colunas do BD em ordem alfabética ou crescente
 district_values = sorted(df['District'].unique())
@@ -32,7 +33,7 @@ distance_values = sorted(df['Distance_to_station'].unique())
 area_values = sorted(df['Area_in_sq_ft'].unique())
 
 # Inicialização da aplicação
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, title="ValueVision - T1")
 server = app.server
 
 # Layout da aplicação
@@ -140,7 +141,7 @@ app.layout = html.Div(
                 html.Div(
                     style={"flex": 1, "text-align": "center"},
                     children=[
-                        html.Label("5 years time: ", style={"font-weight": "bold"}),
+                        html.Label("Expected gain after 5 years: ", style={"font-weight": "bold"}),
                         html.Label(id="future-value-output"),
                     ],
                 ),
@@ -173,13 +174,24 @@ app.layout = html.Div(
 
 def calculate_final_values(n_clicks, neighborhood, distance_m, num_rooms, zone, property_type, area):
     if n_clicks is not None:
-        property_value = calculate_property_value(neighborhood, distance_m, num_rooms, zone, property_type, area, df)
-        future_value = property_value * 1.9
+        property_value, expected_gain = calculate_property_value(neighborhood, distance_m, num_rooms, zone, property_type, area, df)
 
-        formatted_property_value = "£{:,}".format(property_value)
-        formatted_future_value = "£{:,}".format(future_value)
+        # Cálculo da faixa de valores (5% acima e abaixo do property_value)
+        lower_bound_value = property_value * 0.95
+        upper_bound_value = property_value * 1.05
+        lower_bound_gain = expected_gain - 10
+        upper_bound_gain = expected_gain + 10
 
-        return formatted_property_value, formatted_future_value
+        # Formatação do property_value como uma faixa de valores
+        if property_value > 100000:
+            formatted_property_value = "£{:.3f}M - £{:.3f}M".format(lower_bound_value / 1000000, upper_bound_value / 1000000)
+        else:
+            formatted_property_value = "£{:,} - £{:,}".format(lower_bound_value, upper_bound_value)
+
+        # Formatação do future_value permanece inalterada
+        formatted_expected_gain = "{:,.1f}% - {:,.1f}%".format(lower_bound_gain, upper_bound_gain)
+
+        return formatted_property_value, formatted_expected_gain
 
     return "", ""
 
