@@ -13,13 +13,22 @@ def calculate_property_value(neighborhood, distance_m, num_rooms, zone, property
     ]
 
     if filtered_data.empty:
-        return 0  # Retorna 0 se não encontrar nenhum elemento no filtro
+        return 0, 0  # Retorna 0 se não encontrar nenhum elemento no filtro
     else:
         base_value = filtered_data['Predicted_value'].iloc[0]
         estimated_value = base_value * area
         expected_gain = filtered_data['Percent_5_years'].iloc[0]*100
         return estimated_value, expected_gain
 
+# Função para obter os valores únicos da coluna "London_zone" filtrados pelo bairro selecionado
+def get_unique_values_sorted(neighborhood, column):
+    if neighborhood is not None:
+        filtered_df = df[df['District'] == neighborhood]
+        unique_values = filtered_df[column].unique()
+        sorted_unique_values = sorted(unique_values)  # Ordenar os valores alfabeticamente
+        return [{"label": value, "value": value} for value in sorted_unique_values]
+
+    return []
 
 # Importar o banco de dados
 url = 'https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/LondonHousingData.xlsx'
@@ -107,7 +116,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="zone-dropdown",
                             options=[{"label": zone, "value": zone} for zone in zone_values],
-                            value=zone_values[2] if zone_values else None,
+                            value=df[df['District'] == df['District'].unique()[0]]['London_zone'].unique()[0],
                         ),
                     ],
                 ),
@@ -117,7 +126,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="property-type-dropdown",
                             options=[{"label": house_type, "value": house_type} for house_type in house_type_values],
-                            value=house_type_values[2] if house_type_values else None,
+                            value=df[df['District'] == df['District'].unique()[0]]['House_Type'].unique()[1],
                         ),
                     ],
                 ),
@@ -194,6 +203,16 @@ def calculate_final_values(n_clicks, neighborhood, distance_m, num_rooms, zone, 
         return formatted_property_value, formatted_expected_gain
 
     return "", ""
+
+# Callback para atualizar os valores do zone-dropdown e property-type-dropdown de acordo com o bairro selecionado
+@app.callback(
+    [Output("zone-dropdown", "options"), Output("property-type-dropdown", "options")],
+    Input("neighborhood-dropdown", "value"),
+)
+def update_dropdown_options(neighborhood):
+    zone_options = get_unique_values_sorted(neighborhood, "London_zone")
+    property_type_options = get_unique_values_sorted(neighborhood, "House_Type")
+    return zone_options, property_type_options
 
 # Execução do servidor local
 if __name__ == "__main__":
