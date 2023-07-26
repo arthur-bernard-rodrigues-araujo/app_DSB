@@ -80,7 +80,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="property-area-dropdown",
                             options=[{"label": str(area), "value": area} for area in area_values],
-                            value=1261,#area_values[5] if area_values else None,
+                            value=783,
                         ),
                     ],
                 ),
@@ -90,7 +90,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="distance-dropdown",
                             options=[{"label": str(distance), "value": distance} for distance in distance_values],
-                            value=316,#distance_values[5] if distance_values else None,
+                            value=126,
                         ),
                     ],
                 ),
@@ -106,7 +106,7 @@ app.layout = html.Div(
                             included=False,
                             updatemode="drag",
                             tooltip={"placement": "bottom"},
-                            step=1,  # Define o passo do slider para valores inteiros
+                            step=1,
                         ),
                     ],
                 ),
@@ -126,7 +126,7 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="property-type-dropdown",
                             options=[{"label": house_type, "value": house_type} for house_type in house_type_values],
-                            value=df[df['District'] == df['District'].unique()[0]]['House_Type'].unique()[1],
+                            value=df[df['District'] == df['District'].unique()[0]]['House_Type'].unique()[0],
                         ),
                     ],
                 ),
@@ -206,13 +206,20 @@ def calculate_final_values(n_clicks, neighborhood, distance_m, num_rooms, zone, 
 
 # Callback para atualizar os valores do zone-dropdown e property-type-dropdown de acordo com o bairro selecionado
 @app.callback(
-    [Output("zone-dropdown", "options"), Output("property-type-dropdown", "options")],
+    [Output("zone-dropdown", "options"),
+     Output("property-type-dropdown", "options"),
+     Output("distance-dropdown", "options"),
+     Output("property-area-dropdown", "options"),
+     ],
     Input("neighborhood-dropdown", "value"),
 )
 def update_dropdown_options(neighborhood):
     zone_options = get_unique_values_sorted(neighborhood, "London_zone")
     property_type_options = get_unique_values_sorted(neighborhood, "House_Type")
-    return zone_options, property_type_options
+    property_area_options = get_unique_values_sorted(neighborhood, "Area_in_sq_ft")
+    distance_options = get_unique_values_sorted(neighborhood, "Distance_to_station")
+
+    return zone_options, property_type_options, distance_options, property_area_options
 
 # Execução do servidor local
 if __name__ == "__main__":
