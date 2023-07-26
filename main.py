@@ -100,9 +100,9 @@ app.layout = html.Div(
                         dcc.Slider(
                             id="rooms-slider",
                             min=1,
-                            max=6,
+                            max=8,
                             value=3,
-                            marks={i: str(i) for i in range(1, 7)},
+                            marks={i: str(i) for i in range(1, 9)},
                             included=False,
                             updatemode="drag",
                             tooltip={"placement": "bottom"},
