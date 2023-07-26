@@ -37,19 +37,15 @@ server = app.server
 
 # Layout da aplicação
 app.layout = html.Div(
-    style={"font-family": "Arial", "text-align": "center", "padding-top": "70px"},  # Adicionando o espaçamento superior de 36px
+    style={"font-family": "Arial", "text-align": "center"},
     children=[
-        # Grid para esticar a imagem de fundo
         html.Div(
             style={
-                "position": "fixed",
-                "top": 0,
-                "left": 0,
-                "width": "100%",
-                "height": "100%",
-                "z-index": "-1",
-                "background-image": "url(https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/background%20plus%20com%20logo.png)",
+                "width": "100vw",  # 100% da largura da janela
+                "aspect-ratio": "1920/138",  # Proporções da imagem (largura/altura)
+                "background-image": "url(https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/Header_2.png)",
                 "background-size": "cover",
+                "background-position": "center",
             }
         ),
         # Grid com 7 colunas
@@ -64,6 +60,7 @@ app.layout = html.Div(
                             id="neighborhood-dropdown",
                             options=[{"label": district, "value": district} for district in district_values],
                             value=district_values[-6] if district_values else None,
+                            style={"font-size": "12px"},
                         ),
                     ],
                 ),
@@ -79,7 +76,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Label("Distance to station (m): ", style={"font-weight": "bold", "font-size": "14px"}),
+                        html.Label("Distance to station (m): ", style={"font-weight": "bold", "font-size": "12px"}),
                         dcc.Dropdown(
                             id="distance-dropdown",
                             options=[{"label": str(distance), "value": distance} for distance in distance_values],
@@ -125,18 +122,46 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     children=[
-                        html.Button("Calculate", id="calculate-button", style={"width": "100%", "padding": "10px"}),
-                        html.Div(id="property-value-output", style={"font-size": "16px"}),
+                        html.Button("Calculate", id="calculate-button", style={"width": "100%", "padding": "17px"}),
                     ],
                 ),
             ],
+        ),
+        html.Div(
+            style={"display": "flex", "padding": "10px"},
+            children=[
+                html.Div(
+                    style={"flex": 1, "text-align": "center"},
+                    children=[
+                        html.Label("Estimated current value: ", style={"font-weight": "bold"}),
+                        html.Label(id="property-value-output"),
+                    ],
+                ),
+                html.Div(
+                    style={"flex": 1, "text-align": "center"},
+                    children=[
+                        html.Label("5 years time: ", style={"font-weight": "bold"}),
+                        html.Label(id="future-value-output"),
+                    ],
+                ),
+            ],
+        ),
+        html.Div(
+            style={
+                "width": "100vw",
+                "aspect-ratio": "1280/517",
+                "background-image": "url(https://github.com/arthur-bernard-rodrigues-araujo/app_DSB/raw/main/conteudo.png)",
+                "background-size": "cover",
+                "background-position": "center"
+            },
         ),
     ]
 )
 
 # Callback para calcular e exibir o valor do imóvel
 @app.callback(
-    Output("property-value-output", "children"),
+    [Output("property-value-output", "children"),
+     Output("future-value-output", "children")],
     Input("calculate-button", "n_clicks"),
     State("neighborhood-dropdown", "value"),
     State("distance-dropdown", "value"),
@@ -146,11 +171,17 @@ app.layout = html.Div(
     State("property-area-dropdown", "value"),
 )
 
-def calculate_and_display_property_value(n_clicks, neighborhood, distance_m, num_rooms, zone, property_type, area):
+def calculate_final_values(n_clicks, neighborhood, distance_m, num_rooms, zone, property_type, area):
     if n_clicks is not None:
         property_value = calculate_property_value(neighborhood, distance_m, num_rooms, zone, property_type, area, df)
-        return "Today: £{:,}".format(property_value)
-    return ""
+        future_value = property_value * 1.9
+
+        formatted_property_value = "£{:,}".format(property_value)
+        formatted_future_value = "£{:,}".format(future_value)
+
+        return formatted_property_value, formatted_future_value
+
+    return "", ""
 
 # Execução do servidor local
 if __name__ == "__main__":
